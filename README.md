@@ -10,9 +10,20 @@ With ssh-agent-inject you can skip those annoyances and simply reuse your host's
 
 ## Usage
 
-Add `ENV SSH_AUTH_SOCK=/tmp/.ssh-auth-sock` to your Dockerfile and label your container with `com.ensody.ssh-agent-inject` (`docker run -l com.ensody.ssh-agent-inject ...`).
-
 [Download](https://github.com/ensody/ssh-agent-inject/releases) ssh-agent-inject for your platform. Make sure ssh-agent-inject runs in the background or just launch it on-demand.
+
+Add the following to your Dockerfile:
+
+```Dockerfile
+ENV SSH_AUTH_SOCK=/tmp/.ssh-auth-sock
+LABEL com.ensody.ssh-agent-inject=
+```
+
+Alternatively, you can run an arbitrary container directly:
+
+```
+docker run -e SSH_AUTH_SOCK=/tmp/.ssh-auth-sock -l com.ensody.ssh-agent-inject ...
+```
 
 Note that this project is itself using ssh-agent-inject with VS Code (see `.devcontainer/`).
 
