@@ -5,6 +5,7 @@ package main
 import (
 	"context"
 	"flag"
+	"fmt"
 	"io"
 	"log"
 	"os"
@@ -28,6 +29,11 @@ const authSockEnv = "SSH_AUTH_SOCK"
 
 func main() {
 	flag.Parse()
+	if len(flag.Args()) != 0 {
+		fmt.Fprintln(flag.CommandLine.Output(), "Error: No positional arguments allowed.")
+		flag.Usage()
+		os.Exit(2)
+	}
 
 	ctx := context.Background()
 	for {
