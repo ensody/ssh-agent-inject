@@ -6,7 +6,9 @@
 		"--security-opt",
 		"seccomp=unconfined",
 		"-l", "com.ensody.ssh-agent-inject",
+		"-v", "${env:HOME}${env:USERPROFILE}/.ssh:/root/.ssh-localhost:ro",
 	],
+	"postCreateCommand": "mkdir -p ~/.ssh && cp -r ~/.ssh-localhost/* ~/.ssh && chmod 700 ~/.ssh && chmod 600 ~/.ssh/*",
 	"extensions": [
 		"ms-vscode.go",
 	],
