@@ -118,7 +118,11 @@ func injectAgentBg(containerID string, socketPath string) {
 		log.Println(containerID, "Connected to host ssh-agent")
 	}
 
-	args := []string{"exec", "-i", containerID, "/usr/local/bin/ssh-agent-pipe"}
+	args := []string{
+		"exec", "-i",
+		"-e", common.AuthSockEnv + "=" + socketPath,
+		containerID, "/usr/local/bin/ssh-agent-pipe",
+	}
 	if *verbose {
 		args = append(args, "-v")
 	}
