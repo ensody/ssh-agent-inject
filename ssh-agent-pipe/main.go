@@ -10,13 +10,13 @@ import (
 	"os/signal"
 	"sync"
 	"syscall"
+
+	"github.com/ensody/ssh-agent-inject/common"
 )
 
 var (
 	verbose = flag.Bool("v", false, "verbose output on stderr")
 )
-
-const authSockEnv = "SSH_AUTH_SOCK"
 
 func main() {
 	flag.Parse()
@@ -26,9 +26,9 @@ func main() {
 		os.Exit(2)
 	}
 
-	path := os.Getenv(authSockEnv)
+	path := os.Getenv(common.AuthSockEnv)
 	if len(path) == 0 {
-		log.Fatalln(authSockEnv + " not defined")
+		log.Fatalln(common.AuthSockEnv + " not defined")
 	}
 
 	os.Remove(path)

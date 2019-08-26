@@ -18,6 +18,7 @@ import (
 	"github.com/docker/docker/api/types/filters"
 	"github.com/docker/docker/client"
 	"github.com/ensody/ssh-agent-inject/assets"
+	"github.com/ensody/ssh-agent-inject/common"
 )
 
 var (
@@ -25,7 +26,6 @@ var (
 )
 
 const injectionLabel = "com.ensody.ssh-agent-inject"
-const authSockEnv = "SSH_AUTH_SOCK"
 
 func main() {
 	flag.Parse()
@@ -82,7 +82,7 @@ func injectAgent(ctx context.Context, cli *client.Client, containerID string) {
 		return
 	}
 	socketPath := "/tmp/.ssh-auth-sock"
-	const authSockEnvPrefix = authSockEnv + "="
+	const authSockEnvPrefix = common.AuthSockEnv + "="
 	for _, env := range info.Config.Env {
 		if strings.HasPrefix(env, authSockEnvPrefix) && len(env) > len(authSockEnvPrefix) {
 			socketPath = strings.TrimPrefix(env, authSockEnvPrefix)

@@ -1,10 +1,10 @@
 package main
 
 import (
-	"syscall"
 	"io"
 	"os"
 	"os/exec"
+	"syscall"
 
 	"github.com/Microsoft/go-winio"
 )
