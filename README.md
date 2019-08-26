@@ -10,7 +10,7 @@ With ssh-agent-inject you can skip those annoyances and simply reuse your host's
 
 ## Usage
 
-Add `ENV SSH_AUTH_SOCK=/tmp/.ssh-auth-sock` to your Dockerfile. Label your container with `com.ensody.ssh-agent-inject` (`docker run -l com.ensody.ssh-agent-inject ...`).
+Add `ENV SSH_AUTH_SOCK=/tmp/.ssh-auth-sock` to your Dockerfile and label your container with `com.ensody.ssh-agent-inject` (`docker run -l com.ensody.ssh-agent-inject ...`).
 
 [Download](https://github.com/ensody/ssh-agent-inject/releases) ssh-agent-inject for your platform. Make sure ssh-agent-inject runs in the background or just launch it on-demand.
 
