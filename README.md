@@ -1,5 +1,7 @@
 # ssh-agent-inject
 
+[![Build Status](https://travis-ci.com/ensody/ssh-agent-inject.svg?branch=master)](https://travis-ci.com/ensody/ssh-agent-inject)
+
 Forwards the host's ssh-agent into a Docker container. This is especially useful when working with the [Visual Studio Code Remote - Containers](https://code.visualstudio.com/docs/remote/containers) extension and Git repos cloned via SSH.
 
 ## Why this is needed
@@ -33,8 +35,4 @@ All required dependencies are contained in a Docker image defined in `.devcontai
 That way your host system stays clean and the whole environment is automated, exactly defined, isolated from the host, and easily reproducible.
 This saves time and prevents mistakes (wrong version, interference with other software installed on host, etc.).
 
-Use [goreleaser](https://goreleaser.com/) to build binaries for all platforms:
-
-```bash
-goreleaser --snapshot --skip-publish --rm-dist
-```
+Run `./build.sh` to build binaries for all platforms.

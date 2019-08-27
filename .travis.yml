@@ -1,0 +1,28 @@
+dist: bionic
+language: go
+go:
+  - "1.12.9"
+os:
+  - linux
+services:
+  - docker
+git:
+  depth: false
+env:
+  global:
+    - "PATH=$PATH:~/bin"
+    - "GO111MODULE=on"
+sudo: false
+install:
+  - ./.devcontainer/build-common.sh
+script:
+  - set -eo pipefail
+  - ./build.sh
+  - ./test.sh
+deploy:
+  - provider: script
+    skip_cleanup: true
+    script: goreleaser --rm-dist
+    on:
+      tags: true
+      condition: $TRAVIS_OS_NAME = linux && $TRAVIS_TAG =~ ^v[0-9]+(\.[0-9]+)+([\-+].*)?$
