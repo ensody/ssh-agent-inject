@@ -36,3 +36,12 @@ That way your host system stays clean and the whole environment is automated, ex
 This saves time and prevents mistakes (wrong version, interference with other software installed on host, etc.).
 
 Run `./build.sh` to build binaries for all platforms.
+
+## Releasing
+
+* Update `CHANGELOG.md`.
+* Add a tag (e.g. `git tag v1.2.3`) and push it.
+* The CI system will deploy a draft [release](https://github.com/ensody/ssh-agent-inject/releases) to GitHub.
+* Edit the release description and publish it.
+
+Note: Only tags that look like a version number and start with "v" will be deployed to GitHub.
