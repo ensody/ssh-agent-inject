@@ -1,14 +1,14 @@
 #!/usr/bin/env bash
 set -euxo pipefail
 
-ROOT="$(cd "$(dirname "$0")" && pwd)"
+DIR="$(cd "$(dirname "$0")" && pwd)"
 
-"$ROOT/build-common.sh"
+"$DIR/build-common.sh"
 
-source "$ROOT/utils.sh"
+source "$DIR/utils.sh"
 
 cat >> ~/.bashrc <<EOF
-if [ -z "\$BUILD_VERSION_CHECK_DONE" ] && ! diff -q "$ROOT" ".devcontainer/" > /dev/null; then
+if [ -z "\$BUILD_VERSION_CHECK_DONE" ] && ! diff -q "$DIR" ".devcontainer/" > /dev/null; then
   echo -e "\e[1m\e[31mThis container is outdated. Please rebuild.\e[0m" > /dev/stderr
 fi
 export BUILD_VERSION_CHECK_DONE=true

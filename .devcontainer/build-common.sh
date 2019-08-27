@@ -1,9 +1,9 @@
 #!/usr/bin/env bash
 set -euxo pipefail
 
-ROOT="$(cd "$(dirname "$0")" && pwd)"
+DIR="$(cd "$(dirname "$0")" && pwd)"
 
-source "$ROOT/utils.sh"
+source "$DIR/utils.sh"
 
 mkdir -p ~/bin
 
