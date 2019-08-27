@@ -38,7 +38,7 @@ archives:
     builds:
       - unix
     replacements:
-      darwin: Darwin
+      darwin: macOS
       linux: Linux
       amd64: x86_64
 snapshot:
