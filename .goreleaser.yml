@@ -30,6 +30,7 @@ archives:
   - id: windows
     builds:
       - windows
+    format: zip
     replacements:
       windows: Windows
       amd64: x86_64
