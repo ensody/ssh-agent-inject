@@ -3,6 +3,7 @@
 package main
 
 import (
+	"bufio"
 	"context"
 	"flag"
 	"fmt"
@@ -128,9 +129,9 @@ func injectAgentBg(containerID string, socketPath string) {
 	}
 	cmd := exec.Command("docker", args...)
 	setupCommandForPlatform(cmd)
-	cmd.Stderr = os.Stderr
 	stdin, err := cmd.StdinPipe()
 	stdout, err := cmd.StdoutPipe()
+	stderr, err := cmd.StderrPipe()
 
 	connLock := sync.RWMutex{}
 
@@ -142,10 +143,12 @@ func injectAgentBg(containerID string, socketPath string) {
 			conn.Close()
 			conn = nil
 		}
-		wg.Done()
 		stdin.Close()
 		stdout.Close()
+		stderr.Close()
+		wg.Done()
 	}
+
 	wg.Add(1)
 	go func() {
 		defer cleanup()
@@ -161,6 +164,19 @@ func injectAgentBg(containerID string, socketPath string) {
 		_, err = io.Copy(stdin, conn)
 		if err != nil {
 			log.Println(containerID, "Copy from agent to sock failed:", err)
+		}
+	}()
+
+	wg.Add(1)
+	go func() {
+		defer cleanup()
+		scanner := bufio.NewScanner(stderr)
+		for scanner.Scan() {
+			log.Println(containerID, scanner.Text())
+			if err := scanner.Err(); err != nil {
+				log.Println(containerID, "Failed reading logs:", err)
+				return
+			}
 		}
 	}()
 
