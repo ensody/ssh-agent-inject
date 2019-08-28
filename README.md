@@ -29,6 +29,26 @@ docker run -e SSH_AUTH_SOCK=/tmp/.ssh-auth-sock -l com.ensody.ssh-agent-inject .
 
 Note that this project is itself using ssh-agent-inject with VS Code (see `.devcontainer/`).
 
+## How it works
+
+This project consists of two applications that communicate through stdio: `ssh-agent-inject` and `ssh-agent-pipe` which is embedded within the `ssh-agent-inject` binary (that's why you don't see it in the release archive).
+
+The `ssh-agent-inject` command runs on the host and
+
+* watches Docker for containers having the `com.ensody.ssh-agent-inject` label
+* copies the embedded `ssh-agent-pipe` binary into those containers
+* runs `ssh-agent-pipe` within each container via `docker exec`
+* connects to the host's ssh-agent (one connection per container)
+* forwards the host's ssh-agent to `ssh-agent-pipe` via stdio
+
+The `ssh-agent-pipe` command runs in the container and
+
+* listens on a UNIX socket at `$SSH_AUTH_SOCK`
+* handles parallel connections on that UNIX socket
+* serializes all socket<->stdio communication (handles one request-response pair at a time)
+
+The apps communicate via stdio because this keeps the attack surface small and makes it easier to ensure that nobody else can connect to your ssh-agent (assuming you can trust the Docker container, of course).
+
 ## Building
 
 All required dependencies are contained in a Docker image defined in `.devcontainer/`, which can be automatically used with Visual Studio Code (or manually via Docker build & run).
