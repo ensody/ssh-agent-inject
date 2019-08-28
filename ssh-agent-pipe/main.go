@@ -1,6 +1,7 @@
 package main
 
 import (
+	"encoding/binary"
 	"flag"
 	"fmt"
 	"io"
@@ -49,63 +50,107 @@ func main() {
 		os.Exit(0)
 	}(sigc)
 
-	// Dynamically pass stdin (i.e. the responses from the host's ssh-agent) to the current
-	// connected client
-	conn := &dynamicWriter{}
-	go func() {
-		io.Copy(conn, os.Stdin)
-		l.Close()
-		os.Exit(0)
-	}()
-
 	for {
-		c, err := l.Accept()
+		conn, err := l.Accept()
 		if err != nil {
 			continue
 		}
-		if *verbose {
-			log.Println("Client connected")
-		}
-		conn.Lock()
-		conn.conn = c
-		conn.Unlock()
-
-		io.Copy(os.Stdout, c)
-		if *verbose {
-			log.Println("Client disconnected")
-		}
-
-		conn.Lock()
-		c.Close()
-		conn.conn = nil
-		conn.Unlock()
+		go forwardAgent(conn)
 	}
 }
 
-type dynamicWriter struct {
-	sync.RWMutex
-	conn io.Writer
-}
+var stdioLock = &sync.RWMutex{}
 
-func (d *dynamicWriter) Write(b []byte) (int, error) {
+// forwardAgent forwards the given connection to the real ssh-agent via stdio.
+func forwardAgent(conn net.Conn) {
+	// This forwards each request & response pair in a loop between the connection and stdio.
+	// The stdio part of the communication uses a lock to allow multiple clients to communicate in parallel.
+	defer conn.Close()
+	if *verbose {
+		log.Println("Client connected")
+		defer log.Println("Client disconnected")
+	}
 	for {
-		d.Lock()
-		defer d.Unlock()
-		if d.conn == nil {
-			if *verbose {
-				log.Println("Discarding write")
-			}
-			return len(b), nil
+		if *verbose {
+			log.Println("Reading request from connection")
 		}
-		n, err := d.conn.Write(b)
-		if err == nil {
+		packet, err := readAgentPacket(conn)
+		if err != nil {
 			if *verbose {
-				log.Printf("Wrote %d bytes\n", n)
+				log.Println("Error reading request from connection:", err)
 			}
-			return n, err
+			return
+		}
+		packet, err = sendAgentRequest(packet)
+		if err != nil {
+			panic(err)
 		}
 		if *verbose {
-			log.Println("Error during write:", err)
+			log.Println("Writing response to connection")
+		}
+		if _, err := conn.Write(packet); err != nil {
+			log.Println("Error writing response to connection:", err)
+			return
+		}
+		if *verbose {
+			log.Println("Finished request-response sequence")
 		}
 	}
+}
+
+// sendAgentRequest sends an ssh-agent request and returns the respective ssh-agent response.
+func sendAgentRequest(packet []byte) ([]byte, error) {
+	if *verbose {
+		log.Println("Acquiring stdio lock")
+	}
+	stdioLock.Lock()
+	defer func() {
+		if *verbose {
+			log.Println("Releasing stdio lock")
+		}
+		stdioLock.Unlock()
+	}()
+	if *verbose {
+		log.Println("Writing request to stdout")
+	}
+	if _, err := os.Stdout.Write(packet); err != nil {
+		if *verbose {
+			log.Println("Error writing request to stdout:", err)
+		}
+		return nil, err
+	}
+	if *verbose {
+		log.Println("Reading response from stdin")
+	}
+	packet, err := readAgentPacket(os.Stdin)
+	if err != nil {
+		if *verbose {
+			log.Println("Error reading response from stdin:", err)
+		}
+		return nil, err
+	}
+	return packet, nil
+}
+
+const maxPacketSize = 16 << 20
+
+// readAgentPacket reads a whole ssh-agent packet from the given io.Reader.
+func readAgentPacket(r io.Reader) ([]byte, error) {
+	var rawLength [4]byte
+	if _, err := io.ReadFull(r, rawLength[:]); err != nil {
+		return nil, err
+	}
+	length := binary.BigEndian.Uint32(rawLength[:])
+	if length == 0 {
+		return nil, fmt.Errorf("Packet size is 0")
+	}
+	if length > maxPacketSize {
+		return nil, fmt.Errorf("Packet size of %d is too large", length)
+	}
+	data := make([]byte, length)
+	if _, err := io.ReadFull(r, data); err != nil {
+		return nil, err
+	}
+	packet := append(rawLength[:], data...)
+	return packet, nil
 }
