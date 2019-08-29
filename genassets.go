@@ -1,9 +1,9 @@
 // +build ignore
 
 // This is run during go generate and embeds ssh-agent-pipe into the ssh-agent-inject binary.
-// * Compiles the ssh-agent-pipe binary for all platforms.
+// * Compiles the ssh-agent-pipe binary for all target platforms (GOOS=linux, different GOARCHs).
 // * Creates a .tar.gz with that binary having executable permissions set.
-// * Stores that .tar.gz files in the assets/ folder as Go source files targeting the respective host platform.
+// * Stores that .tar.gz files in the assets/ folder as Go source files targeting the respective GOARCH.
 
 package main
 
@@ -31,19 +31,17 @@ const AgentArchive = {{.agent|quote}}
 func main() {
 	os.RemoveAll("assets")
 	os.MkdirAll("assets", 0700)
-	platforms := map[string][]string{
-		"amd64": {"darwin", "linux", "windows"},
-		"arm":   {"linux"},
-		"arm64": {"linux"},
+	archs := []string{
+		"amd64",
+		"arm",
+		"arm64",
 	}
-	for arch, hosts := range platforms {
+	for _, arch := range archs {
 		archive, err := buildAgentArchive(arch)
 		if err != nil {
 			log.Fatalln("Failed compiling ssh-agent-pipe", err)
 		}
-		for _, host := range hosts {
-			genPlatformAssets(arch, host, archive)
-		}
+		genPlatformAssets(arch, archive)
 	}
 }
 
@@ -81,13 +79,14 @@ func buildAgentArchive(arch string) ([]byte, error) {
 	return buffer.Bytes(), nil
 }
 
-func genPlatformAssets(arch string, hostOS string, archive []byte) {
-	config := map[string]string{
-		"agent": string(archive),
-	}
-	file, err := os.Create(fmt.Sprintf("assets/assets_%s_%s.go", hostOS, arch))
+func genPlatformAssets(arch string, archive []byte) {
+	file, err := os.Create(fmt.Sprintf("assets/assets_%s.go", arch))
+	defer file.Close()
 	if err != nil {
 		log.Fatalln("Failed writing assets", err)
+	}
+	config := map[string]string{
+		"agent": string(archive),
 	}
 	assetsTemplate.Execute(file, config)
 }
