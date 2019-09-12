@@ -1,5 +1,10 @@
 # CHANGELOG
 
+## [0.9.1]
+
+* Fixed resource leak consuming Docker sockets
+* Upgraded to Go 1.13
+
 ## [0.9.0]
 
 * Support for multiple parallel connections from the same container
