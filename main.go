@@ -36,31 +36,38 @@ func main() {
 		os.Exit(2)
 	}
 
-	ctx := context.Background()
 	for {
-		cli, err := client.NewEnvClient()
+		err := scanContainers()
 		if err != nil {
-			log.Println("Error connecting to Docker", err)
+			log.Println(err)
 			time.Sleep(5 * time.Second)
 			continue
-		}
-
-		filters := filters.NewArgs()
-		filters.Add("label", injectionLabel)
-
-		containers, err := cli.ContainerList(ctx, types.ContainerListOptions{Filters: filters})
-
-		if err != nil {
-			log.Println("Error fetching containers", err)
-			time.Sleep(5 * time.Second)
-			continue
-		}
-
-		for _, container := range containers {
-			injectAgent(ctx, cli, container.ID)
 		}
 		time.Sleep(1 * time.Second)
 	}
+}
+
+func scanContainers() error {
+	ctx := context.Background()
+	cli, err := client.NewEnvClient()
+	defer cli.Close()
+	if err != nil {
+		return fmt.Errorf("Error connecting to Docker: %w", err)
+	}
+
+	filters := filters.NewArgs()
+	filters.Add("label", injectionLabel)
+
+	containers, err := cli.ContainerList(ctx, types.ContainerListOptions{Filters: filters})
+	if err != nil {
+		return fmt.Errorf("Error listing containers: %w", err)
+	}
+
+	for _, container := range containers {
+		injectAgent(ctx, cli, container.ID)
+	}
+
+	return nil
 }
 
 var injectedAgents = struct {
